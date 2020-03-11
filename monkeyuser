@@ -1,7 +1,13 @@
 #!/bin/bash
-TOKEN="533091221:AAB0gTvmqQMT--ejYsTU"
+
+while true;
+do
+
+TOKEN="$TOKEN"
+WORKING_DIR="/files"
 POST=0
-LASTPOSTLINK=$(cat ~/.monkeyuserlastpost)
+LASTPOSTLINK=$(cat $WORKING_DIR/monkeyuserlastpost)
+
 for LINK in $(curl -L http://www.monkeyuser.com/feed.xml | xml_grep --text_only link | head -6 | tac | head -5)
 do
         if [ "$POST" = "0" ]
@@ -11,15 +17,18 @@ do
                         POST=1
                 fi
         else
-                curl -L "$LINK" > ~/.monkeytemp
-                IMGURL="$(cat ~/.monkeytemp | egrep -A 4 'class="content"' | grep -P -o https:\/\/www\.monkeyuser\.com\/assets\/images.+?\" | sed -r 's/.{1}$//' | tail -1)"
-                wget "$IMGURL" -O /root/.file.png
-                TITLE="$(cat ~/.monkeytemp | xml_grep --html --text_only title)"
+                curl -L "$LINK" > "$WORKING_DIR/monkeytemp"
+                IMGURL="$(cat $WORKING_DIR/monkeytemp | egrep -A 4 'class="content"' | grep -P -o https:\/\/www\.monkeyuser\.com\/assets\/images.+?\" | sed -r 's/.{1}$//' | tail -1)"
+                curl "$IMGURL" -o "$WORKING_DIR/file.png"
+                TITLE="$(cat $WORKING_DIR/monkeytemp | xml_grep --html --text_only title)"
                 ENCODED_TITLE="$(urlencode $TITLE)"
                 ENCODED_URL="$(urlencode $LINK)"
-                curl "https://api.telegram.org/bot$TOKEN/sendPhoto?chat_id=@monkeyusers&caption=$ENCODED_TITLE%0A$ENCODED_URL%0A@monkeyusers" -F photo=@/root/.file.png
-                rm /root/.file.png
-                echo "$LINK" > ~/.monkeyuserlastpost
+                curl "https://api.telegram.org/bot$TOKEN/sendPhoto?chat_id=@monkeyusers&caption=$ENCODED_TITLE%0A$ENCODED_URL%0A@monkeyusers" -F photo=@"$WORKING_DIR/file.png"
+                rm "$WORKING_DIR/file.png"
+                echo "$LINK" > "$WORKING_DIR/monkeyuserlastpost"
         fi
 done
-rm ~/.monkeytemp
+rm "$WORKING_DIR/monkeytemp"
+
+sleep 3600
+done
