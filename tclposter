@@ -11,7 +11,7 @@ POST=0
 LASTPOSTLINK="$(cat $WORKING_DIR/tcllastpostlink)"
 
 for LINK in $(curl https://thecodinglove.com/feed | xml_grep item | xml_grep link --text_only | tac)
-#for LINK in $(cat $WORKING_DIR/tcltemp | tac)
+#for LINK in $(cat $WORKING_DIR/tcltemplink | tac)
 do
     if [ "$POST" = "0" ]
     then
