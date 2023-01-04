@@ -10,7 +10,7 @@ WORKING_DIR="/files"
 POST=0
 LASTPOSTLINK="$(cat $WORKING_DIR/tcllastpostlink)"
 
-for LINK in $(curl https://thecodinglove.com/feed | xml_grep item | xml_grep link --text_only | tac)
+for LINK in $(curl -k https://thecodinglove.com/feed > file.txt && xml_grep item file.txt > file1.txt && xml_grep link --text_only file1.txt | tac)
 #for LINK in $(cat $WORKING_DIR/tcltemplink | tac)
 do
     if [ "$POST" = "0" ]
@@ -24,14 +24,14 @@ do
         fi
     else
         echo "LINK: $LINK"
-        curl $LINK > "$WORKING_DIR/tcltemp"
-        TITLE="$(cat $WORKING_DIR/tcltemp | grep 'meta property="og:title"' | sed -r 's/^.{35}//' | sed -r 's/.{54}$//' | w3m -dump -T text/html)"
+        curl -k $LINK > "$WORKING_DIR/tcltemp"
+        TITLE="$(cat $WORKING_DIR/tcltemp | grep 'property="og:title"' | sed -r 's/^.{36}//' | sed -r 's/.{61}$//' | w3m -dump -T text/html)"
         echo "TITLE: $TITLE"
         ENCODED_TITLE="$(urlencode $TITLE)"
         echo "ENCODED_TITLE: $ENCODED_TITLE"
-        IMGLINK="$(cat $WORKING_DIR/tcltemp | grep -A 6 blog-post-content | tr ">" "\n" | grep -E 'img|image' | grep -P -o http.+?\" | sed -r 's/.{1}$//' | head -1)"
+        IMGLINK="$(cat $WORKING_DIR/tcltemp | grep -A 6 blog-post-content | tr ">" "\n" | grep -E 'img|image' | sed -r 's/^.{14}//' | sed -r 's/.{18}$//')"
         FILENAME="$(basename $IMGLINK)"
-        curl -o "$WORKING_DIR/$FILENAME" "$IMGLINK"
+        curl -k -o "$WORKING_DIR/$FILENAME" "$IMGLINK"
         echo "IMGLINK: $IMGLINK"
         ENCODED_IMGLINK="$(urlencode $IMGLINK)"
         curl "https://api.telegram.org/bot$BOT_TOKEN/sendDocument?chat_id=@tclunofficial&caption=$ENCODED_TITLE%0A@tclunofficial" -F document=@"$WORKING_DIR/$FILENAME"
@@ -39,7 +39,6 @@ do
         echo "$LINK" > "$WORKING_DIR/tcllastpostlink"
     fi
 done
-
 
 sleep 600
 
