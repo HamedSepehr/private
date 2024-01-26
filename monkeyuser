@@ -10,7 +10,7 @@ WORKING_DIR="/files"
 POST=0
 LASTPOSTLINK=$(cat $WORKING_DIR/monkeyuserlastpost)
 
-for LINK in $(curl -L http://www.monkeyuser.com/feed.xml | xml_grep --text_only link | head -6 | tac | head -5)
+for LINK in $(curl -L http://www.monkeyuser.com/index.xml > file2.txt && xml_grep --text_only link file2.txt | head -6 | tac | head -5)
 do
         if [ "$POST" = "0" ]
         then
@@ -20,9 +20,10 @@ do
                 fi
         else
                 curl -L "$LINK" > "$WORKING_DIR/monkeytemp"
-                IMGURL="$(cat $WORKING_DIR/monkeytemp | egrep -A 4 'class="content"' | grep -P -o https:\/\/www\.monkeyuser\.com\/assets\/images.+?\" | sed -r 's/.{1}$//' | tail -1)"
+                IMGPATH="$(cat $WORKING_DIR/monkeytemp | grep -P -o "img src.+?alt=" | sed -r 's/^.{8}//' | sed -r 's/.{5}$//')"
+		IMGURL="https://www.monkeyuser.com/""$IMGPATH"
                 curl "$IMGURL" -o "$WORKING_DIR/file.png"
-                TITLE="$(cat $WORKING_DIR/monkeytemp | xml_grep --html --text_only title)"
+                TITLE="$(cat $WORKING_DIR/monkeytemp | xml_grep --html --text_only title | sed -r 's/.{13}$//')"
                 ENCODED_TITLE="$(urlencode $TITLE)"
                 ENCODED_URL="$(urlencode $LINK)"
                 curl "https://api.telegram.org/bot$TOKEN/sendPhoto?chat_id=@monkeyusers&caption=$ENCODED_TITLE%0A$ENCODED_URL%0A@monkeyusers" -F photo=@"$WORKING_DIR/file.png"
